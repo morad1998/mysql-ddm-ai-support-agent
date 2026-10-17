@@ -28,8 +28,16 @@ const PREAMBLE =
   'this is enforced by the database itself, not by these instructions. Never guess, invent, or ask for the real values of masked fields. ' +
   'Base your entire answer only on the fields and values actually present in the JSON.';
 
-const INITIAL_MESSAGE =
-  'A customer with code CUST-0002 contacted support about a cooling problem and a billing concern. Investigate and draft a reply.';
+// Default used by the CLI run, so earlier evidence runs stay reproducible.
+const DEFAULT_CODE = 'CUST-0002';
+const DEFAULT_QUESTION = 'about a cooling problem and a billing concern';
+
+function initialMessage(code: string, question?: string): string {
+  if (question === undefined) {
+    return `A customer with code ${code} contacted support ${DEFAULT_QUESTION}. Investigate and draft a reply.`;
+  }
+  return `A customer with code ${code} contacted support. Their question: "${question}" Investigate using the tools and draft a reply.`;
+}
 
 // ---------------------------------------------------------------------------
 // Tools
@@ -158,10 +166,13 @@ export interface AgentTrace {
   finalAnswer: string;
 }
 
-export async function runAgent(): Promise<AgentTrace> {
+// Runs the tool-call loop for one customer. Without a question it uses the
+// default CLI message from the S5 evidence runs.
+export async function runAgent(code: string = DEFAULT_CODE, question?: string): Promise<AgentTrace> {
+  const message = initialMessage(code, question);
   const workDir = mkdtempSync(join(tmpdir(), 'ddm-agent-'));
   const trace: AgentTrace = {
-    model: MODEL_ID, region: OCI_REGION, initialMessage: INITIAL_MESSAGE,
+    model: MODEL_ID, region: OCI_REGION, initialMessage: message,
     steps: [], modelCalls: 0, capHit: false, finalAnswer: '',
   };
 
@@ -172,8 +183,8 @@ export async function runAgent(): Promise<AgentTrace> {
       isForceSingleStep: false, isStream: false, maxTokens: 600, temperature: 0.2,
     };
 
-    const history: object[] = [{ role: 'USER', message: INITIAL_MESSAGE }];
-    let turn = await chat(workDir, compartmentId, { ...base, message: INITIAL_MESSAGE, chatHistory: [] });
+    const history: object[] = [{ role: 'USER', message }];
+    let turn = await chat(workDir, compartmentId, { ...base, message, chatHistory: [] });
     trace.modelCalls++;
 
     for (let round = 1; turn.toolCalls.length > 0; round++) {

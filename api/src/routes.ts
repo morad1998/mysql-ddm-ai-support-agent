@@ -1,4 +1,5 @@
-import type { Pool, RowDataPacket } from 'mysql2/promise';
+import type { Connection, Pool, RowDataPacket } from 'mysql2/promise';
+import { withPersonaConnection } from './db.ts';
 
 // Every route returns { status, body }. The server turns that into JSON.
 export interface RouteResult {
@@ -19,12 +20,31 @@ async function findCustomerId(pool: Pool, code: string): Promise<number | undefi
   return rows[0]?.customer_id as number | undefined;
 }
 
+const CUSTOMER_SQL =
+  'SELECT customer_id, full_name, email, mobile, national_id FROM customer WHERE customer_code = ?';
+
 async function getCustomer(pool: Pool, code: string): Promise<RouteResult> {
-  const [rows] = await pool.query<RowDataPacket[]>(
-    'SELECT customer_id, full_name, email, mobile, national_id FROM customer WHERE customer_code = ?',
-    [code],
-  );
+  const [rows] = await pool.query<RowDataPacket[]>(CUSTOMER_SQL, [code]);
   return rows.length === 0 ? NOT_FOUND : { status: 200, body: rows[0] };
+}
+
+// GET /demo/compare/:code
+//
+// This endpoint exists only to power the side-by-side demo UI. It is not a pattern
+// for production use — a real application would never let one endpoint silently
+// hold two different privilege levels.
+//
+// It runs the same customer query twice, on two separate short-lived connections:
+// once as svc_ai_agent (masked) and once as svc_supervisor (exempt, real values).
+export async function compareCustomer(code: string): Promise<RouteResult> {
+  const lookup = async (conn: Connection) => {
+    const [rows] = await conn.query<RowDataPacket[]>(CUSTOMER_SQL, [code]);
+    return rows[0];
+  };
+  const masked = await withPersonaConnection('svc_ai_agent', lookup);
+  if (!masked) return NOT_FOUND;
+  const real = await withPersonaConnection('svc_supervisor', lookup);
+  return { status: 200, body: { masked, real } };
 }
 
 async function getWarranty(pool: Pool, code: string): Promise<RouteResult> {

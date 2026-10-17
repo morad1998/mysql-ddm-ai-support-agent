@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DDM Support Agent</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>DDM Support Agent</h1>
+    <p>MySQL Enterprise dynamic data masking, seen by an AI support agent. All data is synthetic.</p>
+  </header>
+
+  <main>
+    <section class="panel" aria-labelledby="chat-heading">
+      <h2 id="chat-heading">Agent chat</h2>
+      <p class="hint">The agent connects as <code>svc_ai_agent</code> and chooses which tools to call. It only ever sees masked data.</p>
+
+      <form id="ask-form">
+        <label for="ask-code">Customer code</label>
+        <input id="ask-code" name="code" value="CUST-0002" maxlength="20" required pattern="[A-Za-z0-9\-]{1,20}">
+
+        <label for="ask-question">Question</label>
+        <textarea id="ask-question" name="question" rows="3" maxlength="500" required>What's going on with this customer?</textarea>
+
+        <button type="submit" id="ask-button">Ask the agent</button>
+        <span id="ask-status" class="status" role="status"></span>
+      </form>
+
+      <h3>Tool calls</h3>
+      <ol id="tool-trace" class="trace"><li class="empty">No run yet.</li></ol>
+
+      <h3>Final answer</h3>
+      <div id="final-answer" class="answer empty">No run yet.</div>
+    </section>
+
+    <section class="panel" aria-labelledby="compare-heading">
+      <h2 id="compare-heading">Masked vs. real</h2>
+      <p class="hint">The same query run twice: as <code>svc_ai_agent</code> (masked) and as <code>svc_supervisor</code> (exempt). Demo only.</p>
+
+      <form id="compare-form">
+        <label for="compare-code">Customer code</label>
+        <input id="compare-code" name="code" value="CUST-0002" maxlength="20" required pattern="[A-Za-z0-9\-]{1,20}">
+        <button type="submit">Compare</button>
+        <span id="compare-status" class="status" role="status"></span>
+      </form>
+
+      <div class="compare">
+        <div class="view masked">
+          <h3>Masked view <small>svc_ai_agent</small></h3>
+          <dl id="masked-view"></dl>
+        </div>
+        <div class="view real">
+          <h3>Real view <small>svc_supervisor</small></h3>
+          <dl id="real-view"></dl>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

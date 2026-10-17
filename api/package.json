@@ -10,6 +10,7 @@
   },
   "scripts": {
     "start": "node --experimental-strip-types src/server.ts",
+    "agent": "node --experimental-strip-types src/agent.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

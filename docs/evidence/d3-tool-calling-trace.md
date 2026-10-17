@@ -75,3 +75,29 @@ Each item below was checked against CUST-0002's real values from the seed data: 
 | Tool-call arguments (4) | none. The only argument was the customer code. |
 | Tool results (4) | none. Every `card_pan` and `iban` is masked. |
 | Final answer | none |
+
+## Consistency check (3 runs)
+
+The agent was run 2 more times, unchanged and one after the other, on the same date. Run 1 is the trace above. Each run used 2 model calls, made all its tool calls in round 1, and did not hit the cap.
+
+| | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| Tools called | all 4: find_customer, get_warranty, get_orders, get_tickets | **2 only**: get_tickets, get_orders | all 4: find_customer, get_warranty, get_orders, get_tickets |
+| Warranty status (ACTIVE / EXTENDED coverage) stated | NO | NO (it did not fetch the warranty) | NO |
+| Duplicate charge identified | yes | yes | yes |
+| Unit model named | yes (ZAC-SPLIT-24K) | no | yes (ZAC-SPLIT-24K) |
+| Greeting | "Dear Sara A." | none | "Dear Sara A." |
+| Currency symbol | `$1200.00` | none (`1200.00`) | `$1,200.00` |
+| Refund timeline | "within 7 working days" | none given | "within the next 7 working days" |
+| Repair promise | technician "as soon as possible" | engineer "as soon as possible" | technician visit "as soon as possible" |
+| Unmasked values in arguments, results or answer | none | none | none |
+
+"Extended warranty" appears in every answer, but only in the billing sentence ("charged twice for the extended warranty"), which repeats the customer's claim from the ticket. No run states the unit's warranty coverage or its end date.
+
+**Findings**
+
+- **Warranty status: 0 of 3 runs.** The gap is consistent. The model treats the warranty data, when it fetches it at all, as background for the repair promise rather than something to tell the customer.
+- **Tool choice varies.** In run 2 the model decided that the ticket and orders were enough, and skipped `find_customer` and `get_warranty`.
+- **Invented details vary but recur.** A `$` sign appeared in 2 of 3 runs, and a 7-working-day refund timeline in 2 of 3. Both are invented, since the data holds no currency or refund policy.
+- **Billing conclusion: 3 of 3 runs.** The duplicate charge was found every time.
+- **Masking: 3 of 3 runs.** Masking held in every run.

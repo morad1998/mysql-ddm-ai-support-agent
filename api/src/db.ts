@@ -36,6 +36,9 @@ export function getPool(): Pool {
       password: readPassword(),
       database: 'support',
       connectionLimit: 5,
+      // Return DATE/DATETIME as the stored strings, so JSON shows the exact
+      // database values instead of timezone-shifted ISO timestamps.
+      dateStrings: true,
     });
   }
   return pool;

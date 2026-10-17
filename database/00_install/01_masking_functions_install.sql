@@ -1,0 +1,31 @@
+-- =============================================================================
+-- 01_masking_functions_install.sql
+-- Installs component_masking + component_masking_functions together.
+-- =============================================================================
+--
+-- component_masking_functions depends on services provided by component_masking
+-- (for example mysql_masking_random_context). Installing it on its own fails with:
+--   ERROR 3534 (HY000): Cannot satisfy dependency for service
+--   'mysql_masking_random_context' required by component
+--   'mysql::component_masking_functions'.
+--
+-- Use Oracle's own script shipped with the server instead. It:
+--   1. creates the masking_dictionaries table,
+--   2. INSTALL COMPONENT 'file://component_masking';
+--   3. INSTALL COMPONENT 'file://component_masking_functions';
+--
+-- The script lives in the server installation, so its path is local to each
+-- machine. Run it against the mysql schema, as root, for example:
+--
+--   mysql --host=127.0.0.1 --port=3308 -uroot -p -D mysql
+--     < "<basedir>\share\masking_functions_install.sql"
+--
+-- or from inside a mysql session:
+--
+--   USE mysql;
+--   SOURCE <basedir>/share/masking_functions_install.sql;
+--
+-- No server restart is needed.
+
+-- Verification (expected result: XXX-XX-6789)
+SELECT mask_ssn('123-45-6789') AS masked_ssn;

@@ -1,0 +1,22 @@
+{
+  "name": "ddm-ai-support-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Support API that reads the masked support database as the svc_ai_agent persona.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --experimental-strip-types src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "mysql2": "^3.24.6"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
+}
